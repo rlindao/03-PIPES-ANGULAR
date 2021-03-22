@@ -1,40 +1,33 @@
-name: Build and Deploy
-on:
-  push:
-    branches:
-      - master
 
+on: push
+name: Build Angular
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@master
-      - name: Install Dependencies
-        run: npm install
-      - name: Build
-        run: npm run build --prod
-      - name: Archive Production Artifact
-        uses: actions/upload-artifact@master
+      - uses: actions/checkout@v1
+
+      - name: Cache node modules
+        uses: actions/cache@v1
         with:
-          name: dist
-          path: dist
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@master
-      - name: Download Artifact
-        uses: actions/download-artifact@master
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
         with:
-          name: dist
-          path: dist
-      - name: Deploy to Firebase
-        uses: w9jds/firebase-action@master
+          node-version: ${{ matrix.node-version }}
+      - name: npm install and npm run build
+        run: |
+          npm i
+          npm run build:prod
+      - name: Push Build to Releases
+        uses: ncipollo/release-action@v1
         with:
-          args: deploy --only hosting
-        env:
-          FIREBASE_TOKEN: 1//05zmTR6Na_YhlCgYIARAAGAUSNwF-L9IreEbHo0kEGVCUkebB4I6lh_xkidCHTZJxmpM_AWqhKaqbYqAIMFoOdCPFZHjWhUNdZH4
+          artifacts: "dist/angular-githubaction/*"
+          token: ${{ secrets.TOKEN }}
