@@ -2,6 +2,7 @@
   "name": "pipes",
   "version": "0.0.0",
   "scripts": {
+    "deploy": "ng build --prod --base-href=/03-PIPES-ANGULAR/",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
